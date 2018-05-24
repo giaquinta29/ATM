@@ -9,6 +9,7 @@
 import UIKit
 import MapKit
 import Alamofire
+import ObjectMapper
 
 class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDelegate {
 
@@ -18,62 +19,119 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
     // set initial location in Montevideo
     let initialLocation = CLLocation(latitude: -34.8833, longitude: -56.1667)
     let locManager = CLLocationManager()
-    
-    // levantar json
-    let atm =  ATM(id: 1, coordinate: CLLocationCoordinate2D(latitude: -34.8914994, longitude: -56.1587459), address: "Av. 8 de Octubre 2720", network: "Banred", status: "normal",has_money: true, accepts_deposits: true, image_url: "",open_hours: "9 am to 5 pm")
-    
+    let url = "http://ucu-atm.herokuapp.com/api/atm"
+    let regionRadius: CLLocationDistance = 10000
+    var saveAnnotation: [String : ATM] = [:]
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        map.delegate = self
+        
         locManager.delegate = self
         locManager.requestWhenInUseAuthorization()
         locManager.desiredAccuracy = kCLLocationAccuracyBest
         
+        
         centerMapOnLocation(location: initialLocation)
         
-        let annotation = MKPointAnnotation()
-        annotation.coordinate = atm.coordinate
-        annotation.title = atm.address
-        annotation.subtitle = "\(atm.has_money) | \(atm.accepts_deposits)"
-        map.addAnnotation(annotation)
-        
-        
-
+        request(url).responseJSON{ response in
+            
+            if let listAtmsJSON = response.result.value {
+                
+                if let listAtms:[ATM] = Mapper<ATM>().mapArray(JSONArray: listAtmsJSON as! [[String : Any]]){
+                    
+                    for atm in listAtms {
+                        let annotation = MKPointAnnotation()
+                        let latitude = atm.coordinate?.lat
+                        let longitude = atm.coordinate?.long
+                        annotation.coordinate = CLLocationCoordinate2D(latitude: latitude!, longitude: longitude!)
+                        annotation.title = atm.address
+                        var hasMoney = "Not has money"
+                        var acceptsDeposits = "Not deposits"
+                        if (atm.has_money)!{
+                            hasMoney = "Has money"
+                        }
+                        if (atm.has_money)!{
+                            acceptsDeposits = "Deposits"
+                        }
+                        annotation.subtitle = "\(hasMoney) | \(acceptsDeposits)"
+                        self.saveAnnotation[atm.address!] = atm
+                        self.map.addAnnotation(annotation)
+                        
+                    }
+                }
+            }
+            
+        }
+       
+        map.delegate = self
     }
-
-    let regionRadius: CLLocationDistance = 1000
+    
     func centerMapOnLocation(location: CLLocation) {
         let coordinateRegion = MKCoordinateRegionMakeWithDistance(location.coordinate,
                                                                   regionRadius, regionRadius)
         map.setRegion(coordinateRegion, animated: true)
     }
     
+    
+    
+    
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+   
         if annotation is MKUserLocation{
             return nil
         }
         
         let pin = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "pin")
         pin.canShowCallout = true
-        pin.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
+        var atmValues = saveAnnotation[annotation.title!!]
+        let color = colorPin(status: atmValues!.status!)
+        pin.pinTintColor = color
+        
+        //boton e imagen
+        let detailsButton = UIButton(frame: CGRect(origin:CGPoint(x:0,y:0), size: CGSize(width: 90, height: 30)))
+        detailsButton.setImage(UIImage(named: "\(atmValues!.network!.lowercased() )"), for: .normal)
+        pin.rightCalloutAccessoryView = detailsButton
+            
         return pin
+        
     }
+ 
+    func colorPin (status: String) -> UIColor{
+        let color: UIColor
+        if (status == "normal" || status == "normal (with tint)"){
+            color = UIColor.green
+        }else{
+            if (status == "exploded"){
+                color = UIColor.red
+            }else{
+                color = UIColor.black
+            }
+        }
+        return color
+    }
+    
+    var anotacionSeleccionada : MKPointAnnotation!
+
     
     func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
         
-        
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let detailAtm = storyboard.instantiateViewController(withIdentifier: "details") as! DetailsATMViewController
-        
-        //se pasan los datos de los detalles
-        detailAtm.address = atm.address
-        detailAtm.hasMoney = boolToString(value: atm.has_money)
-        detailAtm.openHours = atm.open_hours
-        detailAtm.acceptsDeposits = boolToString(value: atm.accepts_deposits)
-        
-        self.navigationController?.pushViewController(detailAtm, animated: true)
+        if control == view.rightCalloutAccessoryView {
+            
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            let detailAtm = storyboard.instantiateViewController(withIdentifier: "details") as! DetailsATMViewController
+            
+            //se pasan los datos de los detalles
+            let atmValues = saveAnnotation[view.annotation!.title!!]
+            detailAtm.address = atmValues!.address!
+            detailAtm.hasMoney = boolToString(value: atmValues!.has_money)
+            detailAtm.openHours = atmValues!.open_hours!
+            detailAtm.acceptsDeposits = boolToString(value: atmValues!.accepts_deposits)
+            detailAtm.imageStr = atmValues!.image_url!
+            detailAtm.imageNetworkStr = atmValues!.network!.lowercased()
+            self.navigationController?.pushViewController(detailAtm, animated: true)
+        }
     }
+ 
     
     func boolToString(value: Bool?) -> String {
         if let value = value {

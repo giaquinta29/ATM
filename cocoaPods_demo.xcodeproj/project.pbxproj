@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		304B3ACC20AE7A9300EB4163 /* DetailsATMViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304B3ACB20AE7A9300EB4163 /* DetailsATMViewController.swift */; };
-		304B3AD020AE7EA200EB4163 /* Bank.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304B3ACF20AE7EA200EB4163 /* Bank.swift */; };
+		304B3AD020AE7EA200EB4163 /* ATM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304B3ACF20AE7EA200EB4163 /* ATM.swift */; };
 		30E48E9020AD0453009AB7E8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E48E8F20AD0453009AB7E8 /* AppDelegate.swift */; };
 		30E48E9220AD0453009AB7E8 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E48E9120AD0453009AB7E8 /* ViewController.swift */; };
 		30E48E9520AD0453009AB7E8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 30E48E9320AD0453009AB7E8 /* Main.storyboard */; };
@@ -20,7 +20,7 @@
 /* Begin PBXFileReference section */
 		27CF198E7AE6299AA3E95B25 /* Pods_cocoaPods_demo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_cocoaPods_demo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		304B3ACB20AE7A9300EB4163 /* DetailsATMViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailsATMViewController.swift; sourceTree = "<group>"; };
-		304B3ACF20AE7EA200EB4163 /* Bank.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bank.swift; sourceTree = "<group>"; };
+		304B3ACF20AE7EA200EB4163 /* ATM.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ATM.swift; sourceTree = "<group>"; };
 		30E48E8C20AD0453009AB7E8 /* cocoaPods_demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cocoaPods_demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30E48E8F20AD0453009AB7E8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		30E48E9120AD0453009AB7E8 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -64,7 +64,7 @@
 		304B3ACA20AE5F3E00EB4163 /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				304B3ACF20AE7EA200EB4163 /* Bank.swift */,
+				304B3ACF20AE7EA200EB4163 /* ATM.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -225,7 +225,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				304B3ACC20AE7A9300EB4163 /* DetailsATMViewController.swift in Sources */,
-				304B3AD020AE7EA200EB4163 /* Bank.swift in Sources */,
+				304B3AD020AE7EA200EB4163 /* ATM.swift in Sources */,
 				30E48E9220AD0453009AB7E8 /* ViewController.swift in Sources */,
 				30E48E9020AD0453009AB7E8 /* AppDelegate.swift in Sources */,
 			);
