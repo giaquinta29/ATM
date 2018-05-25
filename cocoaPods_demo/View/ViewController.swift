@@ -14,6 +14,7 @@ import ObjectMapper
 class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDelegate {
 
     @IBOutlet weak var map: MKMapView!
+    @IBOutlet weak var waitConnectIndicator: UIActivityIndicatorView!
     
     
     // set initial location in Montevideo
@@ -22,6 +23,8 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
     let url = "http://ucu-atm.herokuapp.com/api/atm"
     let regionRadius: CLLocationDistance = 10000
     var saveAnnotation: [String : ATM] = [:]
+    var hasMoney = ""
+    var acceptsDeposits = ""
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,12 +35,18 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
         
         
         centerMapOnLocation(location: initialLocation)
+        waitConnectIndicator.startAnimating()
         
         request(url).responseJSON{ response in
+            
+            self.waitConnectIndicator.stopAnimating()
+            
             
             if let listAtmsJSON = response.result.value {
                 
                 if let listAtms:[ATM] = Mapper<ATM>().mapArray(JSONArray: listAtmsJSON as! [[String : Any]]){
+                    
+                    
                     
                     for atm in listAtms {
                         let annotation = MKPointAnnotation()
@@ -45,20 +54,26 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
                         let longitude = atm.coordinate?.long
                         annotation.coordinate = CLLocationCoordinate2D(latitude: latitude!, longitude: longitude!)
                         annotation.title = atm.address
-                        var hasMoney = "Not has money"
-                        var acceptsDeposits = "Not deposits"
+                        
                         if (atm.has_money)!{
-                            hasMoney = "Has money"
+                            self.hasMoney = "Has money"
+                        }else{
+                            self.hasMoney = "No money"
                         }
-                        if (atm.has_money)!{
-                            acceptsDeposits = "Deposits"
+                            
+                        if (atm.accepts_deposits)!{
+                            self.acceptsDeposits = "Deposits"
+                        }else{
+                            self.acceptsDeposits = "No deposits"
                         }
-                        annotation.subtitle = "\(hasMoney) | \(acceptsDeposits)"
+                        annotation.subtitle = "\(self.hasMoney) | \(self.acceptsDeposits)"
                         self.saveAnnotation[atm.address!] = atm
                         self.map.addAnnotation(annotation)
                         
                     }
                 }
+            }else{
+                self.viewAlert()
             }
             
         }
@@ -66,13 +81,20 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
         map.delegate = self
     }
     
+    func viewAlert(){
+        let alertController = UIAlertController(title: "Error Connection", message: "The app don't have internet", preferredStyle: UIAlertControllerStyle.alert)
+        let retryAction = UIAlertAction(title: "Retry", style: UIAlertActionStyle.default) {
+            UIAlertAction in self.viewDidLoad()
+        }
+        alertController.addAction(retryAction)
+        self.present(alertController, animated:true)
+    }
+    
     func centerMapOnLocation(location: CLLocation) {
         let coordinateRegion = MKCoordinateRegionMakeWithDistance(location.coordinate,
                                                                   regionRadius, regionRadius)
         map.setRegion(coordinateRegion, animated: true)
     }
-    
-    
     
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -83,11 +105,11 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
         
         let pin = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "pin")
         pin.canShowCallout = true
-        var atmValues = saveAnnotation[annotation.title!!]
+        let atmValues = saveAnnotation[annotation.title!!]
         let color = colorPin(status: atmValues!.status!)
         pin.pinTintColor = color
         
-        //boton e imagen
+        //button and image
         let detailsButton = UIButton(frame: CGRect(origin:CGPoint(x:0,y:0), size: CGSize(width: 90, height: 30)))
         detailsButton.setImage(UIImage(named: "\(atmValues!.network!.lowercased() )"), for: .normal)
         pin.rightCalloutAccessoryView = detailsButton
@@ -96,6 +118,7 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
         
     }
  
+    
     func colorPin (status: String) -> UIColor{
         let color: UIColor
         if (status == "normal" || status == "normal (with tint)"){
@@ -110,8 +133,6 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
         return color
     }
     
-    var anotacionSeleccionada : MKPointAnnotation!
-
     
     func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
         
@@ -120,28 +141,22 @@ class ViewController: UIViewController,MKMapViewDelegate, CLLocationManagerDeleg
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
             let detailAtm = storyboard.instantiateViewController(withIdentifier: "details") as! DetailsATMViewController
             
-            //se pasan los datos de los detalles
             let atmValues = saveAnnotation[view.annotation!.title!!]
             detailAtm.address = atmValues!.address!
-            detailAtm.hasMoney = boolToString(value: atmValues!.has_money)
+            detailAtm.hasMoney = hasMoney
             detailAtm.openHours = atmValues!.open_hours!
-            detailAtm.acceptsDeposits = boolToString(value: atmValues!.accepts_deposits)
+            detailAtm.acceptsDeposits = acceptsDeposits
             detailAtm.imageStr = atmValues!.image_url!
             detailAtm.imageNetworkStr = atmValues!.network!.lowercased()
             self.navigationController?.pushViewController(detailAtm, animated: true)
-        }
-    }
  
-    
-    func boolToString(value: Bool?) -> String {
-        if let value = value {
-            return "\(value)"
-        }
-        else {
-            return "<None>"
             
         }
     }
+    
+    
+    
+ 
     
 }
 
